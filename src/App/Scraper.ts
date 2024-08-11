@@ -63,6 +63,8 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     await page.goto(item.url, { waitUntil: 'domcontentloaded' })
 
     if (await page.locator('#captchacharacters').isVisible()) {
+      console.log('Captcha detected')
+
       await trySolveCaptcha(page)
     }
 
@@ -87,7 +89,7 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
   } catch (error: any) {
     console.error('Failed when processing item', item.url)
 
-    await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }))
+    await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }), 'image/jpeg')
     console.log(await page.innerHTML('body'))
 
     result['error'] = `Error when processing item ${error?.message}`
@@ -120,7 +122,7 @@ async function trySolveCaptcha(page: Page) {
 
   const imageBuffer = Buffer.from(image.data)
 
-  await TelegramService.get.sendPhoto(imageBuffer)
+  await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
 
   const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
 
@@ -128,8 +130,15 @@ async function trySolveCaptcha(page: Page) {
     throw new Error('Gemini repsonse is empty')
   }
 
+  console.log('Pressing captcha input element')
+  await page.locator('#captchacharacters').click()
+  await page.waitForTimeout(500)
+
+  console.log('inserting captcha input')
   await page.locator('#captchacharacters').pressSequentially(captchaPossibleSolution, { delay: 150 })
   await page.waitForTimeout(1000)
+
+  console.log('Clicking Continue shopping button')
   await page.getByText('Continue shopping').click()
 
   await page.waitForLoadState('domcontentloaded')

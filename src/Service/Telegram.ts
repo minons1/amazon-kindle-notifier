@@ -1,4 +1,4 @@
-import TelegramBot from 'node-telegram-bot-api'
+import TelegramBot, { FileOptions } from 'node-telegram-bot-api'
 
 export class TelegramService {
   private static instance: TelegramService
@@ -40,9 +40,9 @@ export class TelegramService {
     }
   }
 
-  public async sendPhoto(photo: Buffer) {
+  public async sendPhoto(photo: Buffer, mimeType: 'image/jpeg') {
     try {
-      await this.bot.sendPhoto(this.chatId, photo)
+      await this.bot.sendPhoto(this.chatId, photo, undefined, { contentType: mimeType, filename: `image-${Date.now()}.jpg` })
     } catch (e) {
       console.error('Error sending photo to Telegram', e)
     }
