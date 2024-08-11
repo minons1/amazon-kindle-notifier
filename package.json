@@ -11,10 +11,12 @@
   },
   "devDependencies": {
     "@types/node": "^22.2.0",
+    "@types/node-telegram-bot-api": "^0.64.7",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "^0.66.0",
     "playwright-core": "^1.46.0",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
