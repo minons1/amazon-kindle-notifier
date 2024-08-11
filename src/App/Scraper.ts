@@ -92,7 +92,7 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }), 'image/jpeg')
     console.log(await page.innerHTML('body'))
 
-    result['error'] = `Error when processing item ${error?.message}`
+    result['error'] = `Error when processing item ${error?.message || '[no error message]'}`
   }
 
   return result
@@ -102,12 +102,12 @@ async function formatMessage(results: Result[]) {
   let formattedMessage = `*Amazon Notifier Bot ${new Date().toString()}*\n\n`
 
   for (const [index, result] of results.entries()) {
-    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error : result.price}\n${result.url}\n`
+    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error.replace(/\n/, ' ') : result.price}\n${result.url}\n`
   }
 
   formattedMessage+= `\n\n- natural learner\nest. 2018 @minonz1`
 
-  return formattedMessage
+  return encodeURIComponent(formattedMessage)
 }
 
 async function trySolveCaptcha(page: Page) {
