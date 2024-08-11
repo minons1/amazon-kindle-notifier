@@ -60,6 +60,10 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
   try {
     await page.goto(item.url, { waitUntil: 'domcontentloaded' })
 
+    if (await page.locator('#captchacharacters').isVisible()) {
+      throw new Error('Captcha detected')
+    }
+
     if (!page.locator('#title')) {
       throw new Error('Title locator not found')
     }

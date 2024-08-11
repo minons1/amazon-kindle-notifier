@@ -15,7 +15,6 @@ export class TelegramService {
   }
 
   public static async build() {
-
     if (!this.instance) {
       this.instance = new TelegramService()
     }

@@ -36,6 +36,11 @@
     tunnel-agent "^0.6.0"
     uuid "^8.3.2"
 
+"@google/generative-ai@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@google/generative-ai/-/generative-ai-0.16.0.tgz#3d8cea2faf08dd8c249fa0726c9c7c460f65bb5f"
+  integrity sha512-doB5ZNxS6m+jUZqaLCeYXfBZCdq6Ho0ibkq5/17xe1qAUZpCLWlvCDGtqFPqqO+yezNmvGatS0KhV22yiOT3DA==
+
 "@types/caseless@*":
   version "0.12.5"
   resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.5.tgz#db9468cb1b1b5a925b8f34822f1669df0c5472f5"
