@@ -102,17 +102,17 @@ async function formatMessage(results: Result[]) {
   let formattedMessage = `*Amazon Notifier Bot ${new Date().toString()}*\n\n`
 
   for (const [index, result] of results.entries()) {
-    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error.replace(/\n/, ' ') : result.price}\n`
+    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error.replace(/\n/, ' ') : result.price}\n${result.url}\n`
   }
 
   formattedMessage += `\n\n- natural learner\nest. 2018 @minonz1`
 
-  return encodeURIComponent(formattedMessage)
+  return formattedMessage
 }
 
 async function trySolveCaptcha(page: Page) {
   try {
-    const imageUrl = await page.locator('img').getAttribute('src', { timeout: 10_000 })
+    const imageUrl = await page.locator('form').locator('img').getAttribute('src', { timeout: 10_000 })
     console.log(imageUrl)
   
     if (!imageUrl) {
