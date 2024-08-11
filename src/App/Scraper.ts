@@ -102,44 +102,51 @@ async function formatMessage(results: Result[]) {
   let formattedMessage = `*Amazon Notifier Bot ${new Date().toString()}*\n\n`
 
   for (const [index, result] of results.entries()) {
-    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error.replace(/\n/, ' ') : result.price}\n${result.url}\n`
+    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error.replace(/\n/, ' ') : result.price}\n`
   }
 
-  formattedMessage+= `\n\n- natural learner\nest. 2018 @minonz1`
+  formattedMessage += `\n\n- natural learner\nest. 2018 @minonz1`
 
   return encodeURIComponent(formattedMessage)
 }
 
 async function trySolveCaptcha(page: Page) {
-  const imageUrl = await page.locator('img').getAttribute('src', { timeout: 10_000 })
-  console.log(imageUrl)
+  try {
+    const imageUrl = await page.locator('img').getAttribute('src', { timeout: 10_000 })
+    console.log(imageUrl)
+  
+    if (!imageUrl) {
+      throw new Error('Captcha Image url not found')
+    }
+  
+    const image = await axios.get(imageUrl, { responseType: 'arraybuffer' })
+  
+    const imageBuffer = Buffer.from(image.data)
+  
+    await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
+    
+    const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
+  
+    if (!captchaPossibleSolution) {
+      throw new Error('Gemini repsonse is empty')
+    }
+  
+    console.log('Pressing captcha input element')
+    await page.locator('#captchacharacters').click()
+    await page.waitForTimeout(500)
+  
+    console.log('inserting captcha input')
+    await page.locator('#captchacharacters').pressSequentially(captchaPossibleSolution, { delay: 150 })
+    await page.waitForTimeout(1000)
+  
+    console.log('Clicking Continue shopping button')
+    await page.getByText('Continue shopping').click()
+  
+    await page.waitForLoadState('domcontentloaded')
 
-  if (!imageUrl) {
-    throw new Error('Captcha Image url not found')
+  } catch (error: any) {
+    console.error('Failed when solving captcha', error?.message)
+
+    throw new Error('Failed when solving captcha')
   }
-
-  const image = await axios.get(imageUrl, { responseType: 'arraybuffer' })
-
-  const imageBuffer = Buffer.from(image.data)
-
-  await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
-
-  const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
-
-  if (!captchaPossibleSolution) {
-    throw new Error('Gemini repsonse is empty')
-  }
-
-  console.log('Pressing captcha input element')
-  await page.locator('#captchacharacters').click()
-  await page.waitForTimeout(500)
-
-  console.log('inserting captcha input')
-  await page.locator('#captchacharacters').pressSequentially(captchaPossibleSolution, { delay: 150 })
-  await page.waitForTimeout(1000)
-
-  console.log('Clicking Continue shopping button')
-  await page.getByText('Continue shopping').click()
-
-  await page.waitForLoadState('domcontentloaded')
 }
