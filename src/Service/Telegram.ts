@@ -40,4 +40,12 @@ export class TelegramService {
       console.error('Error sending message to Telegram', e)
     }
   }
+
+  public async sendPhoto(photo: Buffer) {
+    try {
+      await this.bot.sendPhoto(this.chatId, photo)
+    } catch (e) {
+      console.error('Error sending photo to Telegram', e)
+    }
+  }
 }

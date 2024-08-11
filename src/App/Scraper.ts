@@ -43,7 +43,7 @@ async function initBrowserContext(headless: boolean) {
   const browser = await chromium.launchPersistentContext('', {
     headless: headless === true ? true : false,
     channel: 'chrome',
-    timeout: 30000,
+    timeout: 20_000,
     args: [
       ...headless ? ['--headless=new'] : []
     ]
@@ -55,8 +55,9 @@ async function initBrowserContext(headless: boolean) {
 async function processItem(browser: BrowserContext, item: Data): Promise<Result> {
   let result: Result = { ...item }
 
+  const page = browser.pages()[0]
+
   try {
-    const page = browser.pages()[0]
     await page.goto(item.url, { waitUntil: 'domcontentloaded' })
 
     if (!page.locator('#title')) {
@@ -79,6 +80,8 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     )
   } catch (error: any) {
     console.error('Failed when processing item', item.url)
+
+    await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }))
 
     result['error'] = `Error when processing item ${error?.message}`
   }
