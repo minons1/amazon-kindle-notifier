@@ -68,8 +68,8 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
       throw new Error('Kindle card locator not found')
     }
 
-    const price = await page.locator('#tmm-grid-swatch-KINDLE').locator('.slot-price > span').textContent()
-    const title = await page.locator('#title').textContent() || result.title
+    const price = await page.locator('#tmm-grid-swatch-KINDLE').locator('.slot-price > span').textContent({ timeout: 10_000 })
+    const title = await page.locator('#title').textContent({ timeout: 10_000 }) || result.title
 
     result['price'] = price
     result['title'] = title
@@ -82,6 +82,7 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     console.error('Failed when processing item', item.url)
 
     await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }))
+    console.log(await page.innerHTML('body'))
 
     result['error'] = `Error when processing item ${error?.message}`
   }

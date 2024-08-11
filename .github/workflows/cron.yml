@@ -20,7 +20,7 @@ jobs:
           node-version: 20
           cache: 'yarn'
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install-deps chromium
       - name: Build and Run
         env:
           HEADLESS: true
