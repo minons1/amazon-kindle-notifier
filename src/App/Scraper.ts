@@ -1,7 +1,9 @@
-import { BrowserContext } from 'playwright-core'
+import { BrowserContext, Page } from 'playwright-core'
 import { chromium } from 'playwright-extra'
 import stealthPlugin from 'puppeteer-extra-plugin-stealth'
 import { TelegramService } from '../Service/Telegram'
+import axios from 'axios'
+import { GeminiService } from '../Service/Gemini'
 
 type Data = {
   title: string,
@@ -61,7 +63,9 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     await page.goto(item.url, { waitUntil: 'domcontentloaded' })
 
     if (await page.locator('#captchacharacters').isVisible()) {
-      throw new Error('Captcha detected')
+      await trySolveCaptcha(page)
+
+      throw new Error('Captcha detected & solved?')
     }
 
     if (!page.locator('#title')) {
@@ -104,4 +108,21 @@ async function formatMessage(results: Result[]) {
   formattedMessage+= `\n\n- natural learner\nest. 2018 @minonz1`
 
   return formattedMessage
+}
+
+async function trySolveCaptcha(page: Page) {
+  const imageUrl = await page.locator('img').getAttribute('src', { timeout: 10_000 })
+  console.log(imageUrl)
+
+  if (!imageUrl) {
+    throw new Error('Captcha Image url not found')
+  }
+
+  const image = await axios.get(imageUrl, { responseType: 'arraybuffer' })
+
+  const imageBuffer = Buffer.from(image.data)
+
+  await TelegramService.get.sendPhoto(imageBuffer)
+
+  await GeminiService.get.solveCaptcha(imageBuffer)
 }
