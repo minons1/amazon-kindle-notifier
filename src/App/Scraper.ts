@@ -102,7 +102,7 @@ async function formatMessage(results: Result[]) {
   let formattedMessage = `*Amazon Notifier Bot ${new Date().toString()}*\n\n`
 
   for (const [index, result] of results.entries()) {
-    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error : result.price}\n`
+    formattedMessage += `${index + 1}. ${result.title} ==> ${result.error ? result.error : result.price}\n${result.url}\n`
   }
 
   formattedMessage+= `\n\n- natural learner\nest. 2018 @minonz1`
