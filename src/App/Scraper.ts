@@ -64,8 +64,6 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
 
     if (await page.locator('#captchacharacters').isVisible()) {
       await trySolveCaptcha(page)
-
-      throw new Error('Captcha detected & solved?')
     }
 
     if (!page.locator('#title')) {
@@ -124,5 +122,15 @@ async function trySolveCaptcha(page: Page) {
 
   await TelegramService.get.sendPhoto(imageBuffer)
 
-  await GeminiService.get.solveCaptcha(imageBuffer)
+  const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
+
+  if (!captchaPossibleSolution) {
+    throw new Error('Gemini repsonse is empty')
+  }
+
+  await page.locator('#captchacharacters').pressSequentially(captchaPossibleSolution, { delay: 150 })
+  await page.waitForTimeout(1000)
+  await page.getByText('Continue shopping').click()
+
+  await page.waitForLoadState('domcontentloaded')
 }
