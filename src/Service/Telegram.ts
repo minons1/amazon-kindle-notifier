@@ -1,4 +1,5 @@
 import TelegramBot, { FileOptions } from 'node-telegram-bot-api'
+import { setTimeout } from 'timers/promises'
 
 export class TelegramService {
   private static instance: TelegramService
@@ -31,12 +32,21 @@ export class TelegramService {
   }
 
   public async sendMessage(msg: string) {
-    try {
-      await this.bot.sendMessage(this.chatId, msg, {
-        parse_mode: 'Markdown'
-      })
-    } catch (e) {
-      console.error('Error sending message to Telegram', e)
+    let retryCount = 0
+    while (retryCount < 3) {
+      try {
+        await this.bot.sendMessage(this.chatId, msg, {
+          parse_mode: 'Markdown'
+        })
+
+        break
+      } catch (e) {
+        console.error('Error sending message to Telegram', e)
+        
+        retryCount++
+
+        await setTimeout(1_000)
+      }
     }
   }
 

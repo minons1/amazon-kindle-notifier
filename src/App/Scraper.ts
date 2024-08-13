@@ -123,7 +123,7 @@ async function trySolveCaptcha(page: Page) {
   
     const imageBuffer = Buffer.from(image.data)
   
-    await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
+    // await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
     
     const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
   
