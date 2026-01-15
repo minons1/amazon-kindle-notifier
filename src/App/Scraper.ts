@@ -88,6 +88,13 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
       console.log('  ✓ Captcha solved successfully')
     }
 
+    // Check for "Continue shopping" button on challenge/validation pages
+    if (await page.getByText('Continue shopping').isVisible()) {
+      console.log('  ⚠️  Challenge page detected, clicking "Continue shopping" button...')
+      await handleContinueShopping(page)
+      console.log('  ✓ Challenge page handled successfully')
+    }
+
     if (!page.locator('#title')) {
       throw new Error('Title locator not found')
     }
@@ -134,39 +141,54 @@ async function trySolveCaptcha(page: Page) {
   try {
     const imageUrl = await page.locator('form').locator('img').getAttribute('src', { timeout: 10_000 })
     console.log(imageUrl)
-  
+
     if (!imageUrl) {
       throw new Error('Captcha Image url not found')
     }
-  
+
     const image = await axios.get(imageUrl, { responseType: 'arraybuffer' })
-  
+
     const imageBuffer = Buffer.from(image.data)
-  
+
     // await TelegramService.get.sendPhoto(imageBuffer, 'image/jpeg')
-    
+
     const captchaPossibleSolution = await GeminiService.get.solveCaptcha(imageBuffer)
-  
+
     if (!captchaPossibleSolution) {
       throw new Error('Gemini repsonse is empty')
     }
-  
+
     console.log('Pressing captcha input element')
     await page.locator('#captchacharacters').click()
     await page.waitForTimeout(500)
-  
+
     console.log('inserting captcha input')
     await page.locator('#captchacharacters').pressSequentially(captchaPossibleSolution, { delay: 150 })
     await page.waitForTimeout(1000)
-  
+
     console.log('Clicking Continue shopping button')
     await page.getByText('Continue shopping').click()
-  
+
     await page.waitForLoadState('domcontentloaded')
 
   } catch (error: any) {
     console.error('Failed when solving captcha', error?.message)
 
     throw new Error('Failed when solving captcha')
+  }
+}
+
+async function handleContinueShopping(page: Page) {
+  try {
+    console.log('  → Clicking "Continue shopping" button...')
+    await page.getByText('Continue shopping').click({ timeout: 5_000 })
+
+    console.log('  → Waiting for page to load...')
+    await page.waitForLoadState('domcontentloaded')
+    await page.waitForTimeout(2000) // Additional wait for dynamic content
+
+  } catch (error: any) {
+    console.error('  ✗ Failed when handling challenge page:', error?.message)
+    throw new Error(`Failed to handle challenge page: ${error?.message}`)
   }
 }
