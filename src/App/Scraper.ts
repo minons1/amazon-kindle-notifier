@@ -16,26 +16,43 @@ type Result = Data & {
 }
 
 export async function startScraper() {
+  console.log('=== Amazon Kindle Notifier Started ===')
+  console.log(`Timestamp: ${new Date().toISOString()}`)
+  console.log(`Headless mode: ${process.env.HEADLESS === 'true'}`)
+
   // init browser
+  console.log('Initializing browser context...')
   const browser = await initBrowserContext(process.env.HEADLESS === 'true')
+  console.log('Browser initialized successfully')
 
   // load data
   const data = require('../../data/links.json') as Data[]
+  console.log(`Loaded ${data.length} books to monitor`)
 
   const results = [] as Result[]
 
-  for (const item of data) {
+  for (const [index, item] of data.entries()) {
+    console.log(`\n[${index + 1}/${data.length}] Processing: ${item.title}`)
     const result = await processItem(browser, item)
 
     results.push(result)
+    console.log(`[${index + 1}/${data.length}] Completed: ${result.error ? 'FAILED' : 'SUCCESS'}`)
   }
 
+  console.log('\n=== Scraping Complete ===')
+  console.log(`Total books processed: ${results.length}`)
+  console.log(`Successful: ${results.filter(r => !r.error).length}`)
+  console.log(`Failed: ${results.filter(r => r.error).length}`)
+
+  console.log('\nFormatting and sending Telegram message...')
   const message = await formatMessage(results)
 
   await TelegramService.get.sendMessage(message)
+  console.log('Telegram message sent successfully')
 
-  console.log('Done, closing browser')
+  console.log('\nDone, closing browser')
   await browser.close()
+  console.log('=== Amazon Kindle Notifier Finished ===')
 }
 
 async function initBrowserContext(headless: boolean) {
@@ -60,12 +77,15 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
   const page = browser.pages()[0]
 
   try {
+    console.log(`  → Navigating to URL: ${item.url}`)
     await page.goto(item.url, { waitUntil: 'domcontentloaded' })
+    console.log('  → Page loaded successfully')
 
     if (await page.locator('#captchacharacters').isVisible()) {
-      console.log('Captcha detected')
+      console.log('  ⚠️  Captcha detected, attempting to solve...')
 
       await trySolveCaptcha(page)
+      console.log('  ✓ Captcha solved successfully')
     }
 
     if (!page.locator('#title')) {
@@ -76,19 +96,19 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
       throw new Error('Kindle card locator not found')
     }
 
+    console.log('  → Extracting price and title...')
     const price = await page.locator('#tmm-grid-swatch-KINDLE').locator('.slot-price > span').textContent({ timeout: 10_000 })
     const title = await page.locator('#title').textContent({ timeout: 10_000 }) || result.title
 
     result['price'] = price
     result['title'] = title
 
-    console.log(
-      item.url, '---\n',
-      'Data found --> Price:', price
-    )
+    console.log(`  ✓ Data extracted --> Title: ${title}, Price: ${price}`)
   } catch (error: any) {
-    console.error('Failed when processing item', item.url)
+    console.error(`  ✗ Failed when processing item: ${item.url}`)
+    console.error(`  ✗ Error: ${error?.message || '[no error message]'}`)
 
+    console.log('  → Sending screenshot to Telegram...')
     await TelegramService.get.sendPhoto(await page.screenshot({ fullPage: true }), 'image/jpeg')
     console.log(await page.innerHTML('body'))
 
