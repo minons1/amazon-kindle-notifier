@@ -89,7 +89,7 @@ async function processItem(browser: BrowserContext, item: Data): Promise<Result>
     }
 
     // Check for "Continue shopping" button on challenge/validation pages
-    if (await page.getByText('Continue shopping').isVisible()) {
+    if (await page.getByRole('button', { name: 'Continue shopping' }).isVisible()) {
       console.log('  ⚠️  Challenge page detected, clicking "Continue shopping" button...')
       await handleContinueShopping(page)
       console.log('  ✓ Challenge page handled successfully')
@@ -181,7 +181,7 @@ async function trySolveCaptcha(page: Page) {
 async function handleContinueShopping(page: Page) {
   try {
     console.log('  → Clicking "Continue shopping" button...')
-    await page.getByText('Continue shopping').click({ timeout: 5_000 })
+    await page.getByRole('button', { name: 'Continue shopping' }).click({ timeout: 5_000 })
 
     console.log('  → Waiting for page to load...')
     await page.waitForLoadState('domcontentloaded')
